@@ -27,13 +27,13 @@ class KeyValueStore {
 int main() {
     KeyValueStore store;
     store.set("naam", "mohamed");
-    std::optional<std::string> results = store.get("naam");
+    auto results = store.get("naam");
     if(results.has_value()) {
         std::cout << results.value() << '\n';
     } else{
         std::cout << "found nothing\n";
     }
-    std::optional<std::string> missing = store.get("leeftijd");
+    auto missing = store.get("leeftijd");
     if(missing.has_value()) {
         std::cout << missing.value() << '\n';
     } else{
