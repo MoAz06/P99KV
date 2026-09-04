@@ -70,3 +70,6 @@ Testing/
 
 # Editor
 .vscode/
+
+# Claude Code (local mentor contract, not part of the repo)
+CLAUDE.md
