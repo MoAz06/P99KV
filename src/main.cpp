@@ -39,4 +39,12 @@ int main() {
     } else{
         std::cout << "found nothing\n";
     }
+
+    store.set("naam", "ali");
+    auto results2 = store.get("naam");
+    if (results2.has_value()) {
+        std::cout << results2.value() << '\n';
+    } else {
+        std::cout << "found nothing\n";
+    }
 }
