@@ -14,27 +14,29 @@ void expect(bool condition, std::string_view message) {
     }
 }
 
-}  // namespace
+}
 
 int main() {
     KeyValueStore store;
 
     expect(!store.contains("name"), "new store should not contain a missing key");
-    expect(!store.get("name").has_value(), "get should return nullopt for a missing key");
+    expect(store.get("name") == nullptr, "get should return nullptr for a missing key");
     expect(!store.erase("name"), "erasing a missing key should return false");
 
     store.set("name", "mohamed");
     expect(store.contains("name"), "set should make the key present");
-    expect(store.get("name") == std::optional<std::string>{"mohamed"},
+    const auto* first_value = store.get("name");
+    expect(first_value != nullptr && *first_value == "mohamed",
            "get should return the stored value");
 
     store.set("name", "ali");
-    expect(store.get("name") == std::optional<std::string>{"ali"},
+    const auto* overwritten_value = store.get("name");
+    expect(overwritten_value != nullptr && *overwritten_value == "ali",
            "set should overwrite an existing value");
 
     expect(store.erase("name"), "erasing an existing key should return true");
     expect(!store.contains("name"), "erased key should no longer be present");
-    expect(!store.get("name").has_value(), "get after erase should return nullopt");
+    expect(store.get("name") == nullptr, "get after erase should return nullptr");
     expect(!store.erase("name"), "erasing the same key twice should return false");
 
     if (failures != 0) {

@@ -8,13 +8,13 @@ bool KeyValueStore::contains(const std::string& key) const {
     return data_.find(key) != data_.end();
 }
 
-std::optional<std::string> KeyValueStore::get(const std::string& key) const {
+const std::string* KeyValueStore::get(const std::string& key) const {
     const auto it = data_.find(key);
     if (it == data_.end()) {
-        return std::nullopt;
+        return nullptr;
     }
 
-    return it->second;
+    return &it->second;
 }
 
 bool KeyValueStore::erase(const std::string& key) {

@@ -68,7 +68,7 @@ int main(int argc, char* argv[]) {
     } else if (mode == "get-miss") {
         for (std::size_t round = 0; round < rounds; ++round) {
             for (const std::size_t index : indices) {
-                checksum += store.get(missing_keys[index]).has_value();
+                checksum += store.get(missing_keys[index]) != nullptr;
             }
         }
     } else if (mode == "set-overwrite") {

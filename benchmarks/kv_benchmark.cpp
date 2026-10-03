@@ -107,12 +107,12 @@ BenchResult benchmark_get_missing(KeyValueStore& store,
     std::size_t checksum = 0;
 
     for (std::size_t i = 0; i < 10000; ++i) {
-        checksum += store.get(keys[indices[i]]).has_value();
+        checksum += store.get(keys[indices[i]]) != nullptr;
     }
 
     const auto throughput_start = Clock::now();
     for (const std::size_t index : indices) {
-        checksum += store.get(keys[index]).has_value();
+        checksum += store.get(keys[index]) != nullptr;
     }
     const auto throughput_end = Clock::now();
 
@@ -124,7 +124,7 @@ BenchResult benchmark_get_missing(KeyValueStore& store,
         const auto value = store.get(keys[index]);
         const auto end = Clock::now();
 
-        checksum += value.has_value();
+        checksum += value != nullptr;
         latencies.push_back(static_cast<std::uint64_t>(
             std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count()));
     }

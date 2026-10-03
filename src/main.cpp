@@ -7,9 +7,9 @@ int main() {
 
     store.set("naam", "mohamed");
 
-    const auto result = store.get("naam");
-    if (result.has_value()) {
-        std::cout << result.value() << '\n';
+    const auto* result = store.get("naam");
+    if (result != nullptr) {
+        std::cout << *result << '\n';
     }
 
     return 0;
