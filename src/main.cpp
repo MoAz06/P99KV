@@ -1,50 +1,16 @@
+#include "key_value_store.h"
+
 #include <iostream>
-#include <unordered_map>
-#include <string>
-#include <optional>
-
-class KeyValueStore {
-    private:
-        std::unordered_map<std::string, std::string> data_;
-    public:
-        void set(const std::string& key, const std::string& value){
-            data_[key] = value;
-        }
-
-        bool contains(const std::string& key) const {
-            return data_.find(key) != data_.end();
-        }
-        std::optional<std::string> get(const std::string& key) const {
-            auto it = data_.find(key);
-            if (it == data_.end()) {
-                return std::nullopt;
-            } else{
-                return it->second;
-            }
-        }
-};
 
 int main() {
     KeyValueStore store;
+
     store.set("naam", "mohamed");
-    auto results = store.get("naam");
-    if(results.has_value()) {
-        std::cout << results.value() << '\n';
-    } else{
-        std::cout << "found nothing\n";
-    }
-    auto missing = store.get("leeftijd");
-    if(missing.has_value()) {
-        std::cout << missing.value() << '\n';
-    } else{
-        std::cout << "found nothing\n";
+
+    const auto result = store.get("naam");
+    if (result.has_value()) {
+        std::cout << result.value() << '\n';
     }
 
-    store.set("naam", "ali");
-    auto results2 = store.get("naam");
-    if (results2.has_value()) {
-        std::cout << results2.value() << '\n';
-    } else {
-        std::cout << "found nothing\n";
-    }
+    return 0;
 }
