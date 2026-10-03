@@ -36,3 +36,31 @@ add_executable(p99kv_tests
 target_link_libraries(p99kv_tests PRIVATE p99kv_store)
 
 add_test(NAME key_value_store_tests COMMAND p99kv_tests)
+
+add_executable(p99kv_bench
+    benchmarks/kv_benchmark.cpp
+)
+
+target_link_libraries(p99kv_bench PRIVATE p99kv_store)
+
+target_compile_options(p99kv_bench PRIVATE
+    -Wall
+    -Wextra
+    -Wpedantic
+    -Wconversion
+    -Wshadow
+)
+
+add_executable(p99kv_perf
+    benchmarks/perf_workload.cpp
+)
+
+target_link_libraries(p99kv_perf PRIVATE p99kv_store)
+
+target_compile_options(p99kv_perf PRIVATE
+    -Wall
+    -Wextra
+    -Wpedantic
+    -Wconversion
+    -Wshadow
+)
