@@ -122,6 +122,9 @@ The earlier per-operation clock experiment is discussed in
 **[A Timer Is Not a Measurement](https://moaz06.com/writing/a-timer-is-not-a-measurement)**,
 published on 3 October 2026.
 
+Full tables, raw output, run-to-run spread and the limitations of each
+experiment are in **[BENCHMARKS.md](BENCHMARKS.md)**.
+
 ### What batch means cannot establish
 
 An extra stall of S nanoseconds in one batch raises that batch's per-operation

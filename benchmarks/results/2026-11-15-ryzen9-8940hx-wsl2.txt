@@ -1,0 +1,122 @@
+# Raw benchmark output, 7 consecutive runs, no pause between them.
+# host: AMD Ryzen 9 8940HX with Radeon Graphics, 32 logical cores
+# os: Ubuntu 26.04.1 LTS, kernel 6.18.33.2-microsoft-standard-WSL2
+# compiler: g++ (Ubuntu 15.2.0-16ubuntu1) 15.2.0
+# build: cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo (-O2 -g -DNDEBUG)
+# command: taskset -c 2 ./p99kv_bench
+# started: 2026-11-15T20:21:43Z
+# note: CPU frequency governor is not readable under WSL2; clock behaviour during
+#       these runs was neither fixed nor observed.
+
+--- run 1, t+0s ---
+entries: 50000
+operations per measurement: 200000
+batch: 25 operations per sample, 8000 samples
+median empty clock interval / batch: 1.64 ns/op (diagnostic)
+
+GET hit             12305391 ops/s  p50   76.6 ns  p95  109.8 ns  p99  205.2 ns
+GET miss             9582177 ops/s  p50   73.0 ns  p95  102.6 ns  p99  131.0 ns
+SET overwrite        7085770 ops/s  p50   86.6 ns  p95  127.0 ns  p99  152.3 ns
+
+percentiles are of per-operation means over batches of 25,
+not of individual operations. A stall is diluted across its batch
+and can still affect the tail. Individual-operation percentiles
+cannot be recovered from these batch means.
+checksum: 13530000
+
+--- run 2, t+0s ---
+entries: 50000
+operations per measurement: 200000
+batch: 25 operations per sample, 8000 samples
+median empty clock interval / batch: 1.60 ns/op (diagnostic)
+
+GET hit             13021954 ops/s  p50   72.9 ns  p95   85.8 ns  p99   97.0 ns
+GET miss            14175987 ops/s  p50   69.8 ns  p95   89.4 ns  p99  106.2 ns
+SET overwrite       10189312 ops/s  p50   84.6 ns  p95  119.8 ns  p99  149.9 ns
+
+percentiles are of per-operation means over batches of 25,
+not of individual operations. A stall is diluted across its batch
+and can still affect the tail. Individual-operation percentiles
+cannot be recovered from these batch means.
+checksum: 13530000
+
+--- run 3, t+0s ---
+entries: 50000
+operations per measurement: 200000
+batch: 25 operations per sample, 8000 samples
+median empty clock interval / batch: 1.60 ns/op (diagnostic)
+
+GET hit             13247248 ops/s  p50   72.2 ns  p95   85.0 ns  p99  100.6 ns
+GET miss            14887311 ops/s  p50   65.7 ns  p95   80.2 ns  p99   89.0 ns
+SET overwrite       10629991 ops/s  p50   85.0 ns  p95  111.4 ns  p99  149.5 ns
+
+percentiles are of per-operation means over batches of 25,
+not of individual operations. A stall is diluted across its batch
+and can still affect the tail. Individual-operation percentiles
+cannot be recovered from these batch means.
+checksum: 13530000
+
+--- run 4, t+0s ---
+entries: 50000
+operations per measurement: 200000
+batch: 25 operations per sample, 8000 samples
+median empty clock interval / batch: 1.60 ns/op (diagnostic)
+
+GET hit              8436062 ops/s  p50   77.3 ns  p95  107.8 ns  p99  132.3 ns
+GET miss            10372004 ops/s  p50   69.7 ns  p95   91.0 ns  p99  122.6 ns
+SET overwrite       10508660 ops/s  p50   86.2 ns  p95  113.8 ns  p99  162.7 ns
+
+percentiles are of per-operation means over batches of 25,
+not of individual operations. A stall is diluted across its batch
+and can still affect the tail. Individual-operation percentiles
+cannot be recovered from these batch means.
+checksum: 13530000
+
+--- run 5, t+1s ---
+entries: 50000
+operations per measurement: 200000
+batch: 25 operations per sample, 8000 samples
+median empty clock interval / batch: 1.60 ns/op (diagnostic)
+
+GET hit              8576720 ops/s  p50   77.3 ns  p95  107.0 ns  p99  159.1 ns
+GET miss            10600339 ops/s  p50   69.7 ns  p95   95.0 ns  p99  216.0 ns
+SET overwrite       10731984 ops/s  p50   83.8 ns  p95  110.2 ns  p99  142.7 ns
+
+percentiles are of per-operation means over batches of 25,
+not of individual operations. A stall is diluted across its batch
+and can still affect the tail. Individual-operation percentiles
+cannot be recovered from these batch means.
+checksum: 13530000
+
+--- run 6, t+1s ---
+entries: 50000
+operations per measurement: 200000
+batch: 25 operations per sample, 8000 samples
+median empty clock interval / batch: 1.60 ns/op (diagnostic)
+
+GET hit             13084605 ops/s  p50   74.9 ns  p95  101.0 ns  p99  115.0 ns
+GET miss            14319861 ops/s  p50   66.9 ns  p95   82.6 ns  p99   94.6 ns
+SET overwrite       10323551 ops/s  p50   89.0 ns  p95  116.2 ns  p99  157.5 ns
+
+percentiles are of per-operation means over batches of 25,
+not of individual operations. A stall is diluted across its batch
+and can still affect the tail. Individual-operation percentiles
+cannot be recovered from these batch means.
+checksum: 13530000
+
+--- run 7, t+1s ---
+entries: 50000
+operations per measurement: 200000
+batch: 25 operations per sample, 8000 samples
+median empty clock interval / batch: 1.60 ns/op (diagnostic)
+
+GET hit             12499921 ops/s  p50   76.9 ns  p95   93.8 ns  p99  117.0 ns
+GET miss             9430302 ops/s  p50   68.6 ns  p95   89.4 ns  p99  109.8 ns
+SET overwrite        7569276 ops/s  p50   89.0 ns  p95  124.2 ns  p99  164.3 ns
+
+percentiles are of per-operation means over batches of 25,
+not of individual operations. A stall is diluted across its batch
+and can still affect the tail. Individual-operation percentiles
+cannot be recovered from these batch means.
+checksum: 13530000
+
