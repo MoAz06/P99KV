@@ -457,9 +457,10 @@ the median of its condition is flagged in the output and reported as such.
 
 A frequency-probe block, a dependent chain of integer adds timed with
 `__rdtsc`, runs at the start and end of every run and once inside the shuffle.
-Its value is recorded per block as adds per tick. Reading it as cycles per
-tick assumes one add per cycle and that the chain compiled as written, both of
-which are checked against the disassembly before the value is used.
+Its value is recorded per block as adds per tick, and only as that. The
+disassembly shows which instructions and dependencies were generated, not
+how long they took to execute, so a conversion to core cycles would need
+evidence this design does not collect, and none is attempted.
 
 ### Machine code
 
@@ -511,8 +512,11 @@ the compiler reports, not the ones on the command line.
   the condition's whole-block mean minus the mean whole-block mean of its two
   adjacent control blocks, which is the total cost of instrumenting that
   block; and the condition's reported mean minus the same control reference,
-  which is the inflation of the reading. Their difference is the part of the
-  instrument's cost that falls outside its own timestamps. Secondary
+  which is the inflation of the reading. Their difference reduces to the
+  whole-block mean minus the reported mean, and is reported under that name.
+  It contains loop administration, indexing, result consumption placed
+  outside the timestamps, any interruptions there and the untimed parts of the
+  clock calls; it does not isolate an instrument component. Secondary
   reference: the run-wide median of the control blocks. All ten values are
   reported per statistic and condition, with median and range.
 - Units. `steady_clock` in this libstdc++ counts nanoseconds; `__rdtsc` and
@@ -566,6 +570,78 @@ the compiler reports, not the ones on the command line.
   condition. No batch size will be called optimal; the batched rows are a
   reading of the trade between the reported-minus-control difference and
   sample count, under the rule above.
+
+### Build findings, recorded before the comparative runs
+
+The harness is `benchmarks/experiment/latency_experiment.cpp`, built as
+`p99kv_experiment`; `run.sh` records the environment, disassembles the
+binary, runs the clock probe and the ten runs, and hashes the raw samples;
+`analyze.py` computes exactly the statistics above and applies the rule only
+at n = 10. Building it changed the protocol in the following ways, all fixed
+here before any comparative run.
+
+1. **Two controls, one per loop shape.** A per-operation loop is a different
+   loop from the batched loop, and the disassembly showed its body cannot be
+   matched to the batched control: counter-indexed addressing instead of a
+   pointer walk, and a different loop step. So there are two controls, each
+   the condition's own loop with the clock compiled out: `control_batched`
+   (`batched<NoClock>`, batch 25) and `control_flat` (`per_op<NoClock>`). Every
+   condition block sits between two control blocks of its own shape, and the
+   adjacent-control reference is taken from those. The whole-block difference
+   between the two controls is reported as the loop-shape cost.
+2. **The sweep-indexed `__rdtsc` variant is the batch-1 row** of the batched
+   family: `keys[idx[base + j]]` with a one-iteration inner loop is exactly
+   `batched<TscClock>` at batch 1. It is not a separate function.
+3. **Assembly check, batched family.** The inner loop body of
+   `batched<NoClock>`, `batched<TscClock>` and `batched<ChronoClock>` is the
+   same opcode sequence with registers renamed: index load, context move,
+   shift, key address, `call get`, null test, `size` load and add, pointer
+   step, compare, branch. The control keeps its sample store. Outside the
+   inner loop, per batch: the `__rdtsc` version spills four registers to the
+   stack before the inner loop and reloads them after it, plus two register
+   moves, because `rdtsc` clobbers `rax` and `rdx`; the `steady_clock` version
+   spills one and reloads it around each `call now@plt`. These are per-batch
+   costs of the instrument and are reported as such; the batched conditions
+   are *matched*.
+4. **Assembly check, per-operation family.** The body of all six per-op
+   conditions is the same opcode sequence as `control_flat`'s with two
+   differences. In every per-op condition the key base is reloaded from a
+   stack slot once per operation (`add 0x10(%rsp),%rsi` against `add
+   %r12,%rsi` in the control), and `per_op<ChronoClock, false>` also reloads
+   the context pointer; both are register pressure from the clock and count as
+   instrument cost. `control_flat` itself carries two register moves per
+   operation that the conditions do not, forced by the barrier, which biases
+   the flat control slower by that amount. Placement is as specified in all
+   six: in the *inside* variants the null test, `size` load and add precede
+   the closing read; in the *outside* variants they follow it. The two
+   `__rdtscp` variants carry a stack-protector canary in prologue and epilogue
+   only, because the address of `aux` is taken; nothing in their loops. The
+   per-op conditions are reported as *matched up to the reloads named here*.
+5. **Frequency probe.** Its loop compiled to `mov, add, mov, cmp, jbe` per
+   add, five instructions, not the add alone. It is reported as adds per tick
+   with that loop body on record.
+6. **Flags the compiler actually used**, from `.GCC.command.line`:
+   `-D_FORTIFY_SOURCE=3 -mtune=generic -march=x86-64 -g -O2 -std=c++20
+   -fasynchronous-unwind-tables -fstack-protector-strong
+   -fstack-clash-protection -fcf-protection -fzero-init-padding-bits=all`.
+   `_GLIBCXX_ASSERTIONS` is not defined. glibc 2.43, libstdc++ package
+   16-20260322-1ubuntu1.
+7. **Evidence.** Whole-block time is taken under both clocks around every
+   block. Raw samples are written outside the repository, one file per block,
+   and their SHA-256 list is committed; the per-block histograms named above
+   are not produced by the harness and are derivable from those files. A run
+   is 57 blocks and takes about three seconds.
+8. **Clock probe during the build**, pinned, not part of the data set: the
+   observed gcd of one million consecutive `__rdtsc` read deltas was 24, with
+   minimum non-zero delta 24 and p50 24; the empty `__rdtsc` pair had p50 24
+   ticks, the empty `__rdtscp` + `lfence` pair p50 72 ticks, the empty
+   `steady_clock` pair p50 40 ns; consecutive `steady_clock` reads had gcd
+   1 ns. The probe is re-run by `run.sh` and that output is the committed one.
+9. **Smoke runs.** The harness was executed three times with seed 1 while
+   checking that it builds, runs, writes samples and that the analysis
+   parses. Their numbers were looked at only to see that the three primary
+   statistics compute and differ from one another. They are not committed and
+   are not part of the data set, which `run.sh` produces fresh.
 
 ### Not covered
 

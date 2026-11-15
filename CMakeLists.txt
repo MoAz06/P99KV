@@ -74,3 +74,21 @@ target_compile_options(p99kv_perf PRIVATE
     -Wconversion
     -Wshadow
 )
+
+# The pre-registered measurement experiment (BENCHMARKS.md, section 6).
+# -frecord-gcc-switches stores the flags the compiler actually used in the
+# binary, readable with: readelf -p .GCC.command.line <binary>
+add_executable(p99kv_experiment
+    benchmarks/experiment/latency_experiment.cpp
+)
+
+target_link_libraries(p99kv_experiment PRIVATE p99kv_store)
+
+target_compile_options(p99kv_experiment PRIVATE
+    -Wall
+    -Wextra
+    -Wpedantic
+    -Wconversion
+    -Wshadow
+    -frecord-gcc-switches
+)
