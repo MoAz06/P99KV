@@ -63,55 +63,81 @@ workloads: GET hit, GET miss and SET overwrite.
 
 ## Reading the output
 
-Both columns now agree, which was not true before.
+The `ops/s` column comes from total elapsed time around the throughput loop.
+The loop includes index access, the operation, result consumption and loop
+overhead, with no clock calls inside it. Its reciprocal is an average elapsed
+time per operation, not an individual-operation median or percentile.
 
-The `ops/s` column comes from a loop with no clock inside it. That is the
-control.
+The `p50 / p95 / p99` columns come from a separate pass. One pair of
+`steady_clock::now()` calls covers 25 operations, and elapsed batch time divided
+by 25 becomes one sample. These are percentiles of batch means. Agreement with
+the throughput average does not validate an individual-operation latency
+distribution.
 
-The `p50 / p95 / p99` column used to wrap every single operation in a pair of
-`steady_clock::now()` calls. On this machine that pair costs around 40 ns
-against an operation of around 60 ns, and it also forces ordering that the
-processor would otherwise avoid. Measured against the control over five runs,
-that method reported a p50 of 151 ns where the truth was 63: a bias of
-**+121 ns**. I found that out after publishing a throughput result and wrote it
-up in **[A Timer Is Not a Measurement](https://moaz06.com/writing/a-timer-is-not-a-measurement)**.
+The empty-clock diagnostic takes the median interval between consecutive
+`steady_clock::now()` calls and divides by 25. It measures neither the complete
+execution cost of both clock calls nor the total distortion caused by timing
+the workload.
 
-One clock pair now covers 25 operations and the sample is the mean of the batch.
-The instrument is amortised 25-fold, from about 40 ns per sample down to
-**1.6 ns**, and the two columns now land within a few nanoseconds of each other
-instead of a factor of three apart.
+### Exploratory batch-size sweep
 
-Batch size 25 came from a sweep against the control:
+The following GET-hit results summarize five runs with 200,000 operations per
+measurement on an AMD Ryzen 9 8940HX, Ubuntu under WSL2, g++ 15.2.0, `-O2`,
+pinned to one core with `taskset`.
 
-| batch | p50 | mean bias vs control | samples |
-|---|---|---|---|
-| 1 | 151.0 ns | +121.4 ns | 200,000 |
-| 10 | 63.1 ns | +6.1 ns | 20,000 |
-| **25** | **57.7 ns** | **+2.8 ns** | **8,000** |
-| 100 | 55.5 ns | −1.0 ns | 2,000 |
-| 250 | 54.1 ns | −2.1 ns | 800 |
+The p50 column is the median of the five run p50s. The mean column is the median
+of the five run means. The control column is the median of the five throughput
+averages, 63.2 ns/op. The difference column subtracts that median control from
+the median run mean; it is not a p50 difference or the median of paired run
+differences.
 
-Larger batches reduce the bias a little further and cost samples quickly. At 250
-the p99 of the samples starts drifting on noise, because only 800 are left. This
-project is named after a tail percentile, so 25 is the trade I took: under three
-nanoseconds of bias, with four times the tail resolution of 100.
+| batch | median run p50 | median run mean | median control | difference of medians | samples per run |
+|---|---|---|---|---|---|
+| 1 | 151.0 ns | 184.6 ns | 63.2 ns/op | +121.4 ns | 200,000 |
+| 5 | 76.2 ns | 87.4 ns | 63.2 ns/op | +24.2 ns | 40,000 |
+| 10 | 63.1 ns | 69.3 ns | 63.2 ns/op | +6.1 ns | 20,000 |
+| **25** | **57.7 ns** | **66.0 ns** | **63.2 ns/op** | **+2.8 ns** | **8,000** |
+| 50 | 56.7 ns | 68.2 ns | 63.2 ns/op | +5.0 ns | 4,000 |
+| 100 | 55.5 ns | 62.2 ns | 63.2 ns/op | -1.0 ns | 2,000 |
+| 250 | 54.1 ns | 61.1 ns | 63.2 ns/op | -2.1 ns | 800 |
+| 1000 | 53.5 ns | 58.6 ns | 63.2 ns/op | -4.6 ns | 200 |
 
-The same sweep answered a second question. From batch 25 upward, `std::chrono`
-and `__rdtsc` agreed within 2 ns, so there is no reason to carry a platform
-intrinsic. Batching makes the portable clock cheap enough.
+The execution order was fixed: the control ran once first, followed by increasing
+batch sizes, with `std::chrono` before bare `rdtsc` at each size. Method and order
+were therefore confounded. These are exploratory comparisons, not isolated
+measurements of clock bias or proof that batch 25 is optimal. For example, at
+batch 25 the median paired mean difference is +1.5 ns, while the difference of
+medians shown above is +2.8 ns.
 
-### What this still cannot see
+Batch 25 remains the current setting. It yields four times as many samples as
+batch 100. Changing batch size also changes the distribution of batch means;
+sample count alone does not explain changes in p99 or determine its uncertainty.
 
-The percentiles are percentiles **of batch means**, not of individual
-operations. A single slow operation is averaged with the 24 around it, so a
-one-in-ten-thousand stall does not reach the tail. This column describes how the
-cost of a run of operations is distributed. That is a weaker claim than a true
-per-operation p99, and the benchmark prints the distinction on every run rather
-than leaving it here.
+From batch 25 upward, the two clocks' median run p50s differ by at most 2 ns.
+This agreement applies to that summary statistic, not to all means, tails or
+individual runs, and does not establish equivalent accuracy. The benchmark
+retains the portable clock.
 
-Recovering a real per-operation tail needs a different instrument, not a smaller
-batch: at 60 ns per operation there is no software clock cheap enough to sit on
-both sides of one without changing what it measures.
+The earlier per-operation clock experiment is discussed in
+**[A Timer Is Not a Measurement](https://moaz06.com/writing/a-timer-is-not-a-measurement)**,
+published on 3 October 2026.
+
+### What batch means cannot establish
+
+An extra stall of S nanoseconds in one batch raises that batch's per-operation
+mean by S/25 nanoseconds. It is diluted, not erased, and can still affect the
+batch tail. Individual-operation percentiles cannot be recovered from these
+batch means.
+
+With independent stalls occurring once per 10,000 operations, about 0.25% of
+25-operation batches contain a stall. Such events can appear in the batch
+p99.9 or maximum, even though they need not determine batch p99. An
+individual-operation p99 also need not expose a stall occurring in only 0.01%
+of operations.
+
+Measuring individual-operation latency requires a separate experiment that
+accounts for timestamp overhead, ordering and sampling error. This benchmark
+does not establish that hardware sampling is required.
 
 ## Reproducing the published numbers
 The 59% GET-path improvement in that post was measured as:

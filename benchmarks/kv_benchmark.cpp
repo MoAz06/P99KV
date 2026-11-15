@@ -1,29 +1,24 @@
 // What this measures, and what it does not.
 //
-// Throughput is measured in a loop with no clock inside it. That number is the
-// control: nothing in the loop but the operation.
+// Throughput comes from a loop with no clock calls inside it. Its reciprocal
+// is average elapsed time per operation, including index access, result
+// consumption and loop overhead. It is not an individual-operation percentile.
 //
-// Latency used to be measured by wrapping every single operation in a pair of
-// clock reads. On this machine that pair costs around 40 ns against an
-// operation of around 63 ns, and it also forces ordering the processor would
-// otherwise avoid, so the reported p50 came out near 184 ns: three times the
-// truth. Measured against the throughput control over five runs, the bias of
-// that method was +121 ns.
+// Each distribution sample is elapsed batch time divided by BATCH. The
+// reported percentiles describe batch means, not individual operations.
+// An extra S ns in one batch raises its sample by S / BATCH ns: a stall is
+// diluted, not erased, and can still affect the batch tail.
 //
-// So one clock pair now covers BATCH operations and the sample is the mean of
-// the batch. The instrument is amortised BATCH-fold and the bias drops to a few
-// nanoseconds. BATCH = 25 was chosen from a sweep: by 25 the bias is +2.8 ns,
-// and going further trades tail resolution for very little. At 250 the p99 of
-// the samples starts drifting because only 800 samples are left.
+// BATCH = 25 gives 8,000 samples for 200,000 operations. In the exploratory
+// five-run GET-hit sweep, the median run p50 was 151.0 ns at batch 1 and
+// 57.7 ns at batch 25. The corresponding medians of run means were 184.6 ns
+// and 66.0 ns, versus a median throughput control of 63.2 ns/op. Their
+// differences, +121.4 ns and +2.8 ns, are not p50 errors or median paired
+// differences. The sweep used a fixed execution order, so these comparisons
+// do not isolate clock overhead or establish an optimal batch size.
 //
-// The consequence is stated in the output and is not a detail: these
-// percentiles are percentiles OF BATCH MEANS. A single slow operation is
-// averaged with the 24 around it, so this cannot see a one-in-ten-thousand
-// stall. It reports how the cost of a run of operations is distributed, which
-// is a different and weaker claim than a true per-operation p99.
-//
-// Once batched, std::chrono is as good as rdtsc: from BATCH = 25 upward the two
-// agreed within 2 ns. The portable clock is kept.
+// std::chrono::steady_clock is retained. Agreement between median p50s from
+// this clock and bare rdtsc does not establish either instrument's accuracy.
 
 #include "key_value_store.h"
 
@@ -89,8 +84,8 @@ double ns_since(Clock::time_point start, Clock::time_point end) {
 }
 
 // Runs `op` over every index: once untimed to warm up, once in a bare loop for
-// throughput, and once in batches for the distribution. `op` returns the bytes
-// it touched so the optimiser cannot drop the work.
+// throughput, and once in batches for the distribution. `op` returns a value
+// derived from its result for the printed checksum.
 template <typename Op>
 BenchResult measure(const std::vector<std::size_t>& indices, Op op) {
     std::size_t checksum = 0;
@@ -140,9 +135,9 @@ void print_result(std::string_view name, const BenchResult& result) {
               << result.p99_ns << " ns" << '\n';
 }
 
-// How much of a sample is the clock rather than the work. Printed every run,
-// because it is the number that says whether the rest can be believed.
-double instrument_cost_ns() {
+// Median empty timestamp interval divided by BATCH. This diagnostic is not
+// the complete cost of both clock calls or total measurement distortion.
+double empty_clock_interval_per_op_ns() {
     constexpr std::size_t probes = 20000;
     std::vector<double> costs;
     costs.reserve(probes);
@@ -193,15 +188,17 @@ int main() {
     std::cout << "batch: " << BATCH << " operations per sample, " << get_hit.samples
               << " samples\n";
     std::cout << std::fixed << std::setprecision(2)
-              << "clock cost carried by each sample: " << instrument_cost_ns() << " ns/op\n\n";
+              << "median empty clock interval / batch: "
+              << empty_clock_interval_per_op_ns() << " ns/op (diagnostic)\n\n";
 
     print_result("GET hit", get_hit);
     print_result("GET miss", get_miss);
     print_result("SET overwrite", set_overwrite);
 
     std::cout << "\npercentiles are of per-operation means over batches of " << BATCH
-              << ",\nnot of individual operations: a single stall is averaged with its"
-              << "\nneighbours and will not appear in the tail.\n";
+              << ",\nnot of individual operations. A stall is diluted across its batch"
+              << "\nand can still affect the tail. Individual-operation percentiles"
+              << "\ncannot be recovered from these batch means.\n";
 
     std::cout << "checksum: "
               << get_hit.checksum + get_miss.checksum + set_overwrite.checksum << '\n';
