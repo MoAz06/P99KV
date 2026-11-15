@@ -85,9 +85,9 @@ A five-run sweep over batch sizes 1 to 1000 is recorded in
 **[BENCHMARKS.md](BENCHMARKS.md)**, section 2, with per-run values and its
 limitations. It ran in a fixed execution order with the control measured once
 per run, so it does not isolate clock overhead and does not establish an
-optimal batch size. Batch 25 is a choice carried forward from
-**[A Timer Is Not a Measurement](https://moaz06.com/writing/a-timer-is-not-a-measurement)**
-(3 October 2026), which the sweep neither refutes nor justifies.
+optimal batch size. **[A Timer Is Not a Measurement](https://moaz06.com/writing/a-timer-is-not-a-measurement)**
+(3 October 2026) specified batching without a size; 25 was chosen from this
+sweep, which does not justify it.
 
 ### What batch means cannot establish
 

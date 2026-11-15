@@ -106,12 +106,13 @@ is slow in runs 1 and 7 and at its fastest in run 5. Since the three operations
 execute one after another inside each run, the slow stretches do not coincide
 with run boundaries. They have not been explained.
 
-The slowdown appears in the throughput loop and not in the batched pass of the
-same run. For GET hit, reciprocal throughput exceeds the run's p50 by 1.5 to
-4.7 ns in five runs and by 41.2 and 39.3 ns in runs 4 and 5, where it also
-exceeds those runs' own batch p95 (107.8 and 107.0 ns). The throughput loop
-always runs before the batched loop. This is an observation about where in a
-run the slow stretch fell; it is not explained either.
+For GET hit, reciprocal throughput exceeds the run's p50 of batch means by
+1.5 to 4.7 ns in five runs and by 41.2 and 39.3 ns in runs 4 and 5, where it
+also exceeds those runs' batch p95 (107.8 and 107.0 ns). That compares an
+average with percentiles, and an average can exceed a p95 on the strength of
+the top 5% alone. The benchmark does not print the batched pass's mean or
+total time, so whether the batched pass of runs 4 and 5 escaped the slow
+stretch or carried it in its tail is not established.
 
 The `ops/s` and percentile columns measure different things, in a fixed order,
 and agreement between them validates neither. Reciprocal median GET hit
@@ -230,8 +231,9 @@ section added on 15 November 2026 (commit `bbdfa7f`), says that "interleaving
 the runs matters more than the number of them". The sweep and the experiment in
 section 3 were run on that same day and followed neither.
 
-Batch 25 remains the setting in the benchmark. It is a choice carried forward
-from the October essay, which this sweep does not refute and does not justify.
+Batch 25 remains the setting in the benchmark. The October essay specified
+batching over a block of N operations and named no size; 25 was chosen on
+15 November 2026 from this sweep, which does not justify it.
 It yields four times as many samples as batch 100, which bears on how finely
 the p99 of batch means in section 1 is resolved, and on no individual-operation
 percentile. Changing batch size also changes the distribution being sampled,
@@ -281,14 +283,15 @@ integer multiple of 24 TSC ticks, 10.02 ns at this calibration: B's p50 is
 72 ticks in all seven runs, its p95 and p99 range over 360-456 and 480-696
 ticks, and D's values are likewise multiples of 24. A's per-operation
 percentiles, from `steady_clock`, are all within 1 ns of a multiple of 10 ns
-(150, 151, 220, 240, 260, 281, 311, 330, 331, 361, 370, 411). No per-operation
-value between grid points occurs in either raw file, and the sweep's batch-1
-`__rdtsc` p50s are 6, 8, 6, 6 and 7 times 24 ticks. The batched rows (C here,
+(150, 151, 220, 240, 260, 281, 311, 330, 331, 361, 370, 411). No reported
+per-operation percentile between grid points occurs in either raw file, and
+the sweep's batch-1 `__rdtsc` p50s are 6, 8, 6, 6 and 7 times 24 ticks. The batched rows (C here,
 batch 5 and up in section 2) do not sit on the grid, since each sample is
-divided by its batch size. This file asserts nothing about what produces the
-grid. It is recorded because it bounds what any per-operation p50 in this file
-can mean: "30.1 ns in every run" is "72 ticks in every run", and the neighbouring
-representable values are 48 and 96 ticks.
+divided by its batch size. The raw files hold rounded percentiles and
+means, not samples, so this is a pattern in the reported percentiles; it does
+not show that intermediate sample values were absent or impossible. This file
+asserts nothing about what produces the pattern. It is recorded because every
+reported per-operation percentile lies on it.
 
 A fixed p50 with a moving mean is not specific to instrument B. A's p50 was
 150.0 ns in six runs and 151.0 in one, with its mean ranging 160.9-177.1; D's
@@ -369,8 +372,8 @@ checking these two loops is a separate step, listed under *Open*.
   operation percentiles cannot be recovered from batch means. The batch-1 rows
   of section 2 and instruments A, B and D of section 3 do time operations
   individually, but their intervals include the instrument, are not established
-  to bracket the lookup when the clock is bare `__rdtsc`, and sit on a ~10 ns
-  grid; they do not give one either.
+  to bracket the lookup when the clock is bare `__rdtsc`, and every reported
+  percentile of them lies on a ~10 ns grid; they do not give one either.
 - **That hardware sampling is required.** Measuring individual-operation
   latency needs an experiment that accounts for the instrument's own cost,
   for CPU reordering around a non-serialising read, for execution-order
@@ -405,10 +408,11 @@ now; a departure from it after the data exist is reported as a departure.
 1. How much does reported latency differ between a per-operation clock and a
    batched clock, when execution order is not confounded with method?
 2. What does each placement of result consumption, inside or outside the
-   timestamps, report, for each per-operation clock? For bare `__rdtsc` this
-   is a question about program order only; the serialised pair is the
-   instrument that can separate "work moved outside the timestamps" from
-   "reordering across the read".
+   timestamps, report, under each per-operation clock? For bare `__rdtsc`
+   placement is a statement about program order only. The serialised pair
+   reports what placement yields under an instrument that orders the reads;
+   it also changes instruction cost, overlap and register use, so it does not
+   decompose the bare `__rdtsc` difference into causes.
 3. Once batched, do `std::chrono::steady_clock` and `__rdtsc` differ?
 4. What is the spread of the control when it is measured repeatedly within a
    run, rather than once at the start?
@@ -452,8 +456,10 @@ excluded for any reason; a block whose whole-block time exceeds three times
 the median of its condition is flagged in the output and reported as such.
 
 A frequency-probe block, a dependent chain of integer adds timed with
-`__rdtsc`, runs at the start and end of every run and once inside the shuffle,
-and its cycles-per-tick value is recorded per block.
+`__rdtsc`, runs at the start and end of every run and once inside the shuffle.
+Its value is recorded per block as adds per tick. Reading it as cycles per
+tick assumes one add per cycle and that the chain compiled as written, both of
+which are checked against the disassembly before the value is used.
 
 ### Machine code
 
@@ -481,8 +487,9 @@ the compiler reports, not the ones on the command line.
 - Raw per-sample ticks of every block, saved outside the repository with their
   SHA-256 recorded in the committed summary, together with a per-block
   histogram of tick values committed in the repository.
-- The output of `clock_probe` from the same session, extended to print the TSC
-  increment quantum (the gcd of consecutive `__rdtsc` deltas), and to time an
+- The output of `clock_probe` from the same session, extended to print the
+  observed gcd of consecutive `__rdtsc` read deltas, a property of the reads
+  that does not establish the counter's resolution, and to time an
   empty `__rdtscp` + `lfence` pair against an empty `__rdtsc` pair.
 - `/sys/devices/system/clocksource/clocksource0/current_clocksource`, the
   kernel's detected TSC frequency, `/proc/cpuinfo` flags, `g++ -v`, the exact
@@ -495,15 +502,30 @@ the compiler reports, not the ones on the command line.
 
 ### Analysis, fixed in advance
 
-- Primary statistic, per condition and run: the condition's block mean in
-  ticks per operation minus the mean of its two adjacent control blocks.
-  Secondary reference: the run-wide median of all control blocks. All ten
-  values are reported per condition, with their median and range.
+- Two per-operation means are defined for every block and both are recorded.
+  The *whole-block mean* is the block's elapsed time, taken once around the
+  whole block, divided by 200,000; it includes everything the block does,
+  sample storage and the untimed halves of every clock call included. The
+  *reported mean* is the sum of the block's timed intervals divided by
+  200,000; the control has none. Primary statistics, per condition and run:
+  the condition's whole-block mean minus the mean whole-block mean of its two
+  adjacent control blocks, which is the total cost of instrumenting that
+  block; and the condition's reported mean minus the same control reference,
+  which is the inflation of the reading. Their difference is the part of the
+  instrument's cost that falls outside its own timestamps. Secondary
+  reference: the run-wide median of the control blocks. All ten values are
+  reported per statistic and condition, with median and range.
+- Units. `steady_clock` in this libstdc++ counts nanoseconds; `__rdtsc` and
+  `__rdtscp` count TSC ticks. A contrast within one clock is computed in that
+  clock's unit. A contrast across clocks, and every whole-block statistic, is
+  computed in nanoseconds, with ticks converted by one constant calibrated at
+  the start of each run against `steady_clock` over a one-second spin, printed
+  in the run header and applied after the run.
 - Pre-registered contrasts, each as a per-run paired difference of block means
   and each under the rule below: per-operation clock X with consumption inside
   minus batch-1 clock X, and minus batch-25 clock X, for X in {`steady_clock`,
   `__rdtsc`} (question 1); inside minus outside for each of the three
-  per-operation clocks, in ticks, and the sweep-indexed `__rdtsc` variant
+  per-operation clocks, on both means, and the sweep-indexed `__rdtsc` variant
   minus the plain inside variant (question 2); `steady_clock` minus `__rdtsc`
   at each batch size (question 3).
 - Per run: every control block value with its position, the within-run range
@@ -517,19 +539,25 @@ the compiler reports, not the ones on the command line.
   interpolation. Per-operation conditions yield percentiles of instrumented
   single-operation intervals, batched conditions yield percentiles of batch
   means; they are labelled separately, shown side by side, and never
-  differenced. The TSC quantum from `clock_probe` is printed beside the
-  per-operation percentiles, and a zero-width range is read as resolution, not
-  precision.
+  differenced. The observed gcd of consecutive `__rdtsc` read deltas from
+  `clock_probe` is printed beside the per-operation percentiles. A percentile
+  that is identical across runs is reported as identical, without
+  interpretation.
 - A difference is reported as *resolved* only if its ten paired values share a
   sign, with a tie counted as not sharing. That is a two-sided sign test at
   p = 0.002 per contrast. About thirty contrasts are tested without
   multiplicity correction, so a single resolved row among the small-effect
   contrasts is weaker evidence than its nominal p. A difference that is not
   resolved is reported as "not resolved at n = 10, observed range [a, b]" and
-  never as "no difference". Under roughly normal paired differences the rule
-  resolves effects of about two standard deviations of the per-run paired
-  difference, so the smallest effect this design can resolve is set by the
-  question 4 floor, and is stated from it before any contrast is read.
+  never as "no difference". The sensitivity of the rule depends on the
+  distribution of each contrast's own paired differences, which includes the
+  variation of the condition and its covariance with the controls; the control
+  spread from question 4 does not set it. The only sensitivity statement made
+  is the reported range of the ten values. For reference, under normal paired
+  differences an effect of two standard deviations shares a sign in all ten
+  runs with about 79% probability; that is a reference figure, not a minimum
+  detectable effect. The sign test also assumes the ten runs are independent,
+  which consecutive runs on one machine need not be.
 - The condition-minus-control difference is called the *reported-minus-control
   difference* throughout. Its components, the clock calls' own cost, lost
   overlap across iterations, code-generation differences, sample storage and
