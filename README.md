@@ -1,21 +1,101 @@
 # P99KV
 
-A C++/Linux systems performance lab built around a low-latency
-in-memory key-value server.
+A C++/Linux performance lab built around an in-memory key-value store. The store
+is deliberately simple. The point is the measurement around it.
 
-## Goal
+## What this is
 
-Learn performance engineering from first principles:
+I use this repository to learn performance engineering from first principles:
+what a change actually costs, how to measure it without lying to myself, and how
+much of a measurement turns out to be the measuring.
 
-- C++ systems programming
-- Linux profiling
-- memory management
-- CPU cache behavior
-- concurrency
-- tail latency
-- compiler-generated assembly
-- x86-64 vs ARM64 performance
+It is not a database and it is not trying to become one. There is no network
+layer, no persistence, no concurrency and no eviction. A single
+`std::unordered_map` behind a small API is enough surface to ask the questions
+I am interested in.
+
+## Build and run
+
+Requires CMake 3.20 and a C++20 compiler.
+
+```sh
+cmake -B build
+cmake --build build -j
+```
+
+When you do not pick a build type, this defaults to `RelWithDebInfo` (`-O2 -g`).
+That is deliberate: an unoptimised benchmark mostly measures the absence of
+optimisation, and `-g` keeps the binaries readable under `perf`.
+
+Correctness tests:
+
+```sh
+./build/p99kv_tests
+```
+
+Full benchmark:
+
+```sh
+./build/p99kv_bench
+```
+
+A single isolated workload, for running under `perf`:
+
+```sh
+./build/p99kv_perf get-hit
+./build/p99kv_perf get-miss
+./build/p99kv_perf set-overwrite
+```
+
+## What the benchmark does
+
+50,000 entries, 32-byte values, 200,000 operations per measurement, across three
+workloads: GET hit, GET miss and SET overwrite.
+
+- The access pattern comes from a fixed-seed xorshift, so every run touches the
+  same keys in the same order.
+- 10,000 untimed operations warm each workload before anything is recorded.
+- Throughput and latency are measured in separate loops. The throughput loop
+  contains no clock calls at all.
+- A checksum derived from the returned values is printed, so the optimiser
+  cannot delete the work being measured.
+
+## Reading the output
+
+The `ops/s` column is the one I trust.
+
+The `p50 / p95 / p99` column is produced by wrapping each individual operation in
+a pair of `steady_clock::now()` calls, and on this machine that pair costs around
+76 ns. A GET hit takes roughly 66 ns. So most of what the latency column reports
+is the cost of asking the time, not the cost of the operation.
+
+I found that out after publishing a throughput result, and wrote it up:
+**[A Timer Is Not a Measurement](https://moaz06.com/writing/a-timer-is-not-a-measurement)**.
+That post has the full method, the controls, and the mistake.
+
+Measuring per-operation latency honestly means batching the timing or sampling
+it. That is the next piece of work here.
+
+## Reproducing the published numbers
+
+The 59% GET-path improvement in that post was measured as:
+
+- commit `51ae8fd`, compared against its parent
+- `-O2`
+- five interleaved runs of each build, medians compared
+- one pinned core
+- AMD Ryzen 9 8940HX, WSL2, g++ 15.2.0
+
+Interleaving the runs matters more than the number of them: it is what stops a
+slow minute on the machine from landing entirely on one of the two builds.
+
+Note that `-DCMAKE_BUILD_TYPE=Release` compiles at `-O3`, not `-O2`, and will not
+reproduce those numbers exactly.
 
 ## Status
 
-Early development.
+Early, and measured. The store does what the tests say it does. Everything past
+that is in progress.
+
+MIT licensed. Built by Mohamed Azahrioui ([@MoAz06](https://github.com/MoAz06)),
+with notes at [moaz06.com](https://moaz06.com).

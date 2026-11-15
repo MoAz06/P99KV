@@ -2,6 +2,16 @@ cmake_minimum_required(VERSION 3.20)
 
 project(P99KV LANGUAGES CXX)
 
+# A benchmark compiled without optimisation mostly measures the absence of
+# optimisation, so pick a sane default when the caller does not. RelWithDebInfo
+# is -O2 -g: -O2 matches the published measurements, and -g keeps the binaries
+# readable under perf, which is the point of the repository.
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Build type" FORCE)
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+        Debug Release RelWithDebInfo MinSizeRel)
+endif()
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
