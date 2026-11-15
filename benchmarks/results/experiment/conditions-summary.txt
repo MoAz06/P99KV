@@ -1,0 +1,12 @@
+freq_probe                                   24 instructions, 2 clock-related, calls: 
+warmup                                       25 instructions, 0 clock-related, calls: char
+batched<NoClock>                             73 instructions, 0 clock-related, calls: char
+per_op<NoClock, true>                        43 instructions, 0 clock-related, calls: char
+batched<TscClock>                            88 instructions, 2 clock-related, calls: char
+batched<ChronoClock>                         78 instructions, 2 clock-related, calls: char, std::chrono::_V2::steady_clock::now()@pl
+per_op<TscpClock, false>                     68 instructions, 4 clock-related, calls: __stack_chk_fail@plt, char
+per_op<TscpClock, true>                      65 instructions, 4 clock-related, calls: __stack_chk_fail@plt, char
+per_op<TscClock, false>                      56 instructions, 2 clock-related, calls: char
+per_op<TscClock, true>                       55 instructions, 2 clock-related, calls: char
+per_op<ChronoClock, false>                   54 instructions, 2 clock-related, calls: char, std::chrono::_V2::steady_clock::now()@pl
+per_op<ChronoClock, true>                    50 instructions, 2 clock-related, calls: char, std::chrono::_V2::steady_clock::now()@pl

@@ -1,0 +1,6 @@
+rdtsc consecutive read deltas: n=1000000 observed_gcd=24 min_nonzero=24 p50=24 p99=48
+empty pair rdtsc (ticks)          p50=24 p95=48 p99=48 mean=35.75 observed_gcd=24
+empty pair rdtscp+lfence (ticks)  p50=72 p95=96 p99=96 mean=85.90 observed_gcd=1
+empty pair steady_clock (ns)      p50=40 p95=40 p99=41 mean=36.56 observed_gcd=1
+steady_clock consecutive read deltas: observed_gcd=1 ns
+calibration over 1 s: 2.3955 ticks/ns

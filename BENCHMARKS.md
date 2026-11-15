@@ -651,9 +651,106 @@ not controlled by this design; the frequency-probe blocks are the only
 observable of them it records. The experiment is scoped to the one operation
 the earlier experiments measured.
 
+## 7. Results of the section 6 experiment
+
+Ten runs, seeds 1 to 10, 15 November 2026, pinned to vCPU 2, binary built from
+commit `b9ca0be`. No run or block was excluded and no block exceeded three
+times its condition's median. Everything in this section is read from
+[`benchmarks/results/experiment/analysis.md`](benchmarks/results/experiment/analysis.md),
+produced by `analyze.py` from the committed per-run output; the environment,
+recorded compiler switches, disassembly, clock probe and sample hashes are in
+the same directory. "Resolved" means all ten paired values share a sign, as
+fixed in section 6; "not resolved" means they do not, and says nothing about
+whether a difference exists. Medians are given with the range of the ten
+values. Nothing here is explained.
+
+### Against the control of the same loop shape (ns per operation)
+
+| condition | whole-block minus control | reported minus control | whole-block minus reported |
+|---|---|---|---|
+| per-op `steady_clock`, inside | +156 (135 to 240) resolved | +119 (98 to 195) resolved | +37.0 (36.5 to 45.0) resolved |
+| per-op `steady_clock`, outside | +159 (135 to 222) resolved | +121 (97 to 184) resolved | +37.4 (37.0 to 39.6) resolved |
+| per-op `__rdtscp`+`lfence`, inside | +163 (127 to 259) resolved | +122 (88 to 217) resolved | +39.6 (38.4 to 42.6) resolved |
+| per-op `__rdtscp`+`lfence`, outside | +176 (151 to 226) resolved | +135 (113 to 184) resolved | +38.8 (37.9 to 42.5) resolved |
+| per-op `__rdtsc`, inside | +24.9 (17.5 to 95.4) resolved | -1.1 (-8.5 to +64.3) not resolved | +26.9 (23.9 to 33.2) resolved |
+| per-op `__rdtsc`, outside | +31.9 (24.9 to 49.8) resolved | +2.5 (-15.1 to +11.6) not resolved | +29.1 (25.1 to 40.2) resolved |
+| batched `steady_clock` 1 | +151 (131 to 359) resolved | +113 (94 to 316) resolved | +37.7 resolved |
+| batched `steady_clock` 5 | +23.5 (13.9 to 32.9) resolved | +16.1 (6.4 to 25.6) resolved | +7.4 resolved |
+| batched `steady_clock` 10 | +13.2 (-8.6 to +32.0) not resolved | +9.2 (-12.3 to +28.3) not resolved | +3.7 resolved |
+| batched `steady_clock` 25 | +6.2 (0.9 to 22.4) resolved | +4.7 (-0.5 to +20.9) not resolved | +1.5 resolved |
+| batched `steady_clock` 50 | +0.4 (-12.3 to +45.2) not resolved | -0.3 (-13.0 to +44.3) not resolved | +0.7 resolved |
+| batched `steady_clock` 100 | +0.0 (-8.3 to +3.1) not resolved | -0.3 (-8.7 to +2.8) not resolved | +0.4 resolved |
+| batched `__rdtsc` 1 | +31.1 (17.3 to 36.3) resolved | +16.5 (2.7 to 21.5) resolved | +14.8 resolved |
+| batched `__rdtsc` 5 | +5.0 (0.6 to 10.8) resolved | +2.1 (-2.3 to +7.8) not resolved | +2.9 resolved |
+| batched `__rdtsc` 10 | +2.0 (-3.6 to +8.8) not resolved | +0.5 (-5.1 to +7.3) not resolved | +1.5 resolved |
+| batched `__rdtsc` 25 | +1.6 (-62.6 to +9.1) not resolved | +1.0 (-63.2 to +8.5) not resolved | +0.6 resolved |
+| batched `__rdtsc` 50 | -0.3 (-23.2 to +10.2) not resolved | -0.6 (-23.5 to +9.9) not resolved | +0.3 resolved |
+| batched `__rdtsc` 100 | -1.0 (-10.5 to +1.4) not resolved | -1.1 (-10.7 to +1.3) not resolved | +0.2 resolved |
+
+The whole-block-minus-reported column is resolved for every condition and is
+nearly constant within each: for the per-operation conditions 27 to 40 ns per
+operation, and for the batched conditions it falls with batch size (38, 7.4,
+3.7, 1.5, 0.7, 0.4 ns for `steady_clock` at batch 1, 5, 10, 25, 50, 100; 14.8,
+2.9, 1.5, 0.6, 0.3, 0.2 for `__rdtsc`). It is the time inside the block that
+the timestamps do not cover, and section 6 lists what it contains.
+
+### The pre-registered contrasts
+
+- **Question 1.** Per-op `steady_clock` (inside) minus batched `steady_clock`
+  at 25: reported +116 ns (93 to 195), whole-block +152 (128 to 238), both
+  resolved. Per-op `__rdtsc` (inside) minus batched `__rdtsc` at 25:
+  whole-block +26.5 (15.8 to 97.1) resolved; reported +0.9 (-10.3 to +66.6)
+  not resolved. Per-op against batch 1 of the same clock: not resolved for
+  either clock on either statistic.
+- **Question 2.** Inside minus outside is not resolved for any of the three
+  per-operation clocks, on the reported mean or on the whole-block mean.
+  Batched `__rdtsc` at 1 minus per-op `__rdtsc` inside, the loop-shape
+  contrast on the reported mean: +41 ticks (-139 to +61), not resolved.
+- **Question 3.** `steady_clock` minus `__rdtsc`, reported mean, same batch
+  size: +98 ns at batch 1 (84 to 398), +13.3 at batch 5 (7.1 to 24.7), +12.8
+  at batch 10 (0.1 to 42.8), all resolved; +3.9 at batch 25, +4.1 at 50, +0.5
+  at 100, not resolved.
+- **Question 4.** `control_flat`: within-run standard deviation, median over
+  runs, 7.1 ns; between-run standard deviation of the per-run means 6.3 ns.
+  `control_batched`: 9.7 and 3.3 ns. In seven of ten runs the first control
+  block of the run was its highest or near it (73 to 216 ns per operation
+  against 54 to 65 for most blocks). These describe drift and bound nothing.
+
+### Descriptive percentiles
+
+Per-operation `__rdtsc` reported a median run p50 of 72 ticks with consumption
+inside and 72 with it outside; batched `__rdtsc` at 1 reported 144. All three
+are in one binary, one session, with the disassembly in section 6. The
+section 4 candidate, placement of result consumption, does not distinguish
+them: both placements report 72. The loop shape does, in the p50; the
+corresponding mean contrast is not resolved, as stated under question 2.
+Per-operation `steady_clock` reported a median run p50 of 150 to 150.5 ns in
+both placements, and `__rdtscp` + `lfence` 384 and 396 ticks. The clock probe
+in this session again reported an observed gcd of 24 for consecutive
+`__rdtsc` read deltas.
+
+### What this does and does not settle
+
+- Timing single operations with `steady_clock` or with `__rdtscp` + `lfence`
+  makes the block 155 to 176 ns per operation slower than the same loop with
+  no clock, and the readings they report are 119 to 135 ns per operation
+  above the control, on an operation the control runs in about 60 ns. Those
+  are resolved under the rule, with the ranges shown.
+- A bare `__rdtsc` pair per operation makes the block 25 to 32 ns per
+  operation slower, resolved; the readings it reports are not resolved as
+  different from the control. The 27 to 29 ns per operation that the block
+  pays and the reading does not show is resolved.
+- Batching with `steady_clock` reduces the reported inflation from +113 ns at
+  batch 1 and +16 at batch 5, both resolved, to values that ten runs do not
+  resolve at batch 10 and above. The whole-block cost at batch 25 is resolved
+  at +6.2 ns per operation (0.9 to 22.4). "Not resolved" is not "zero".
+- Nothing here establishes an individual-operation latency distribution, a
+  cause for any number above, an optimal batch size, or that the two clocks
+  agree beyond batch 10; it establishes that they differ at batch 1, 5 and 10.
+- One machine, one operation, one session, ten consecutive runs.
+
 ## Open
 
-- Run the experiment in section 6.
 - Disassemble the control loop and the timed loop of `p99kv_bench` itself and
   record whether they differ beyond the clock calls.
 - Explain the run-to-run spread in section 1 before treating any single-run

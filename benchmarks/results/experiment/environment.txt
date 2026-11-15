@@ -1,0 +1,109 @@
+# recorded 2026-11-15T21:48:17Z
+# git commit: b9ca0bee5836e3adc54cbf57bbf5227efbdb790e (dirty: 1 paths)
+# core: taskset -c 2
+
+## compile command (compile_commands.json)
+/usr/bin/c++  -I/home/mohamed/P99KV/include -O2 -g -DNDEBUG -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wshadow -frecord-gcc-switches -o CMakeFiles/p99kv_experiment.dir/benchmarks/experiment/latency_experiment.cpp.o -c /home/mohamed/P99KV/benchmarks/experiment/latency_experiment.cpp
+
+## recorded switches (readelf -p .GCC.command.line)
+
+String dump of section '.GCC.command.line':
+  [     0]  GNU C++20 15.2.0 -D_FORTIFY_SOURCE=3 -mtune=generic -march=x86-64 -g -O2 -std=c++20 -fasynchronous-unwind-tables -fstack-protector-strong -fstack-clash-protection -fcf-protection -fzero-init-padding-bits=all
+
+
+## build id
+    Build ID: e3eb8a865c8d1588fd0c64a45429c440da7882fd
+
+## g++ -v
+Using built-in specs.
+COLLECT_GCC=g++
+COLLECT_LTO_WRAPPER=/usr/libexec/gcc/x86_64-linux-gnu/15/lto-wrapper
+OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa
+OFFLOAD_TARGET_DEFAULT=1
+Target: x86_64-linux-gnu
+Configured with: ../src/configure -v --with-pkgversion='Ubuntu 15.2.0-16ubuntu1' --with-bugurl=file:///usr/share/doc/gcc-15/README.Bugs --enable-languages=c,ada,c++,go,d,fortran,objc,obj-c++,m2,rust,cobol,algol68 --prefix=/usr --with-gcc-major-version-only --program-suffix=-15 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/libexec --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-bootstrap --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-libstdcxx-backtrace --enable-gnu-unique-object --disable-vtable-verify --enable-plugin --enable-default-pie --with-system-zlib --enable-libphobos-checking=release --with-target-system-zlib=auto --enable-objc-gc=auto --enable-multiarch --disable-werror --enable-cet --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32,m64,mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none=/build/gcc-15-j35TAX/gcc-15-15.2.0/debian/tmp-nvptx/usr,amdgcn-amdhsa=/build/gcc-15-j35TAX/gcc-15-15.2.0/debian/tmp-gcn/usr --enable-offload-defaulted --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu --with-build-config=bootstrap-lto-lean --enable-link-serialization=2
+Thread model: posix
+Supported LTO compression algorithms: zlib zstd
+gcc version 15.2.0 (Ubuntu 15.2.0-16ubuntu1) 
+
+## predefined macros of interest
+#define __OPTIMIZE__ 1
+#define _FORTIFY_SOURCE 3
+
+## ldd
+	linux-vdso.so.1 (0x000073bf8f953000)
+	libstdc++.so.6 => /usr/lib/x86_64-linux-gnu/libstdc++.so.6 (0x000073bf8f600000)
+	libgcc_s.so.1 => /usr/lib/x86_64-linux-gnu/libgcc_s.so.1 (0x000073bf8f908000)
+	libc.so.6 => /usr/lib/x86_64-linux-gnu/libc.so.6 (0x000073bf8f200000)
+	libm.so.6 => /usr/lib/x86_64-linux-gnu/libm.so.6 (0x000073bf8f4da000)
+	/lib64/ld-linux-x86-64.so.2 (0x000073bf8f955000)
+
+## glibc
+GNU C Library (Ubuntu GLIBC 2.43-2ubuntu2.7) stable release version 2.43.
+
+## libstdc++ package
+Version: 16-20260322-1ubuntu1
+
+## uname -a
+Linux LAPTOP-FCDCJ86E 6.18.33.2-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Thu Jun 18 21:54:43 UTC 2026 x86_64 GNU/Linux
+
+## lscpu
+Architecture:                            x86_64
+CPU op-mode(s):                          32-bit, 64-bit
+Address sizes:                           48 bits physical, 48 bits virtual
+Byte Order:                              Little Endian
+CPU(s):                                  32
+On-line CPU(s) list:                     0-31
+Vendor ID:                               AuthenticAMD
+Model name:                              AMD Ryzen 9 8940HX with Radeon Graphics
+CPU family:                              25
+Model:                                   97
+Thread(s) per core:                      2
+Core(s) per socket:                      16
+Socket(s):                               1
+Stepping:                                2
+BogoMIPS:                                4790.92
+Flags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology tsc_reliable nonstop_tsc cpuid extd_apicid tsc_known_freq pni pclmulqdq ssse3 fma cx16 sse4_1 sse4_2 movbe popcnt aes xsave avx f16c rdrand hypervisor lahf_lm cmp_legacy svm cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw topoext perfctr_core ssbd ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves avx512_bf16 clzero xsaveerptr arat npt nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avx512vbmi umip avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq rdpid fsrm
+Virtualization:                          AMD-V
+Hypervisor vendor:                       Microsoft
+Virtualization type:                     full
+L1d cache:                               512 KiB (16 instances)
+L1i cache:                               512 KiB (16 instances)
+L2 cache:                                16 MiB (16 instances)
+L3 cache:                                32 MiB (1 instance)
+NUMA node(s):                            1
+NUMA node0 CPU(s):                       0-31
+Vulnerability Gather data sampling:      Not affected
+Vulnerability Ghostwrite:                Not affected
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             Not affected
+Vulnerability L1tf:                      Not affected
+Vulnerability Mds:                       Not affected
+Vulnerability Meltdown:                  Not affected
+Vulnerability Mmio stale data:           Not affected
+Vulnerability Old microcode:             Not affected
+Vulnerability Reg file data sampling:    Not affected
+Vulnerability Retbleed:                  Not affected
+Vulnerability Spec rstack overflow:      Vulnerable: Safe RET, no microcode
+Vulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl
+Vulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+Vulnerability Spectre v2:                Mitigation; Retpolines; IBPB conditional; IBRS_FW; STIBP always-on; RSB filling; PBRSB-eIBRS Not affected; BHI Not affected
+Vulnerability Srbds:                     Not affected
+Vulnerability Tsa:                       Mitigation; Clear CPU buffers
+Vulnerability Tsx async abort:           Not affected
+Vulnerability Vmscape:                   Not affected
+
+## /proc/cpuinfo flags (cpu0)
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology tsc_reliable nonstop_tsc cpuid extd_apicid tsc_known_freq pni pclmulqdq ssse3 fma cx16 sse4_1 sse4_2 movbe popcnt aes xsave avx f16c rdrand hypervisor lahf_lm cmp_legacy svm cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw topoext perfctr_core ssbd ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves avx512_bf16 clzero xsaveerptr arat npt nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avx512vbmi umip avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq rdpid fsrm
+
+## clocksource
+tsc
+
+## kernel tsc
+[    0.000000] clocksource: hyperv_clocksource_tsc_page: mask: 0xffffffffffffffff max_cycles: 0x24e6a1710, max_idle_ns: 440795202120 ns
+[    0.000000] tsc: Detected 2395.462 MHz processor
+[    0.181057] clocksource: tsc-early: mask: 0xffffffffffffffff max_cycles: 0x2287787bbf9, max_idle_ns: 440795265834 ns
+[    0.408298] clocksource: Switched to clocksource tsc-early
+[    0.470157] clocksource: tsc: mask: 0xffffffffffffffff max_cycles: 0x2287787bbf9, max_idle_ns: 440795265834 ns
+[    0.472212] clocksource: Switched to clocksource tsc
+[    4.638087] kvm_amd: TSC scaling supported
