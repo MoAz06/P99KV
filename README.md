@@ -58,8 +58,8 @@ workloads: GET hit, GET miss and SET overwrite.
 - Throughput and latency are measured in separate loops. The throughput loop
   contains no clock calls at all, and the latency loop takes one timestamp pair
   per 25 operations rather than per operation.
-- A checksum derived from the returned values is printed, so the optimiser
-  cannot delete the work being measured.
+- A checksum is printed, from the returned values for GET and a constant for
+  SET, so the optimiser cannot delete the work being measured.
 
 ## Reading the output
 
@@ -81,49 +81,13 @@ the workload.
 
 ### Exploratory batch-size sweep
 
-The following GET-hit results summarize five runs with 200,000 operations per
-measurement on an AMD Ryzen 9 8940HX, Ubuntu under WSL2, g++ 15.2.0, `-O2`,
-pinned to one core with `taskset`.
-
-The p50 column is the median of the five run p50s. The mean column is the median
-of the five run means. The control column is the median of the five throughput
-averages, 63.2 ns/op. The difference column subtracts that median control from
-the median run mean; it is not a p50 difference or the median of paired run
-differences.
-
-| batch | median run p50 | median run mean | median control | difference of medians | samples per run |
-|---|---|---|---|---|---|
-| 1 | 151.0 ns | 184.6 ns | 63.2 ns/op | +121.4 ns | 200,000 |
-| 5 | 76.2 ns | 87.4 ns | 63.2 ns/op | +24.2 ns | 40,000 |
-| 10 | 63.1 ns | 69.3 ns | 63.2 ns/op | +6.1 ns | 20,000 |
-| **25** | **57.7 ns** | **66.0 ns** | **63.2 ns/op** | **+2.8 ns** | **8,000** |
-| 50 | 56.7 ns | 68.2 ns | 63.2 ns/op | +5.0 ns | 4,000 |
-| 100 | 55.5 ns | 62.2 ns | 63.2 ns/op | -1.0 ns | 2,000 |
-| 250 | 54.1 ns | 61.1 ns | 63.2 ns/op | -2.1 ns | 800 |
-| 1000 | 53.5 ns | 58.6 ns | 63.2 ns/op | -4.6 ns | 200 |
-
-The execution order was fixed: the control ran once first, followed by increasing
-batch sizes, with `std::chrono` before bare `rdtsc` at each size. Method and order
-were therefore confounded. These are exploratory comparisons, not isolated
-measurements of clock bias or proof that batch 25 is optimal. For example, at
-batch 25 the median paired mean difference is +1.5 ns, while the difference of
-medians shown above is +2.8 ns.
-
-Batch 25 remains the current setting. It yields four times as many samples as
-batch 100. Changing batch size also changes the distribution of batch means;
-sample count alone does not explain changes in p99 or determine its uncertainty.
-
-From batch 25 upward, the two clocks' median run p50s differ by at most 2 ns.
-This agreement applies to that summary statistic, not to all means, tails or
-individual runs, and does not establish equivalent accuracy. The benchmark
-retains the portable clock.
-
-The earlier per-operation clock experiment is discussed in
-**[A Timer Is Not a Measurement](https://moaz06.com/writing/a-timer-is-not-a-measurement)**,
-published on 3 October 2026.
-
-Full tables, raw output, run-to-run spread and the limitations of each
-experiment are in **[BENCHMARKS.md](BENCHMARKS.md)**.
+A five-run sweep over batch sizes 1 to 1000 is recorded in
+**[BENCHMARKS.md](BENCHMARKS.md)**, section 2, with per-run values and its
+limitations. It ran in a fixed execution order with the control measured once
+per run, so it does not isolate clock overhead and does not establish an
+optimal batch size. Batch 25 is a choice carried forward from
+**[A Timer Is Not a Measurement](https://moaz06.com/writing/a-timer-is-not-a-measurement)**
+(3 October 2026), which the sweep neither refutes nor justifies.
 
 ### What batch means cannot establish
 
